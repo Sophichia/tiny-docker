@@ -151,3 +151,8 @@ exited!
 We can see the hostname inside the sub process changed.
 If we don't add `CLONE_NEWUTS` here, we can still see the hostname changed inside the sub process, but the actual current hostname is changed by the sub process.
 We can use `hostname` command to check.
+
+## Reference
+1. 《自己动手写Docker》
+2. [Linux Namespaces](https://medium.com/@teddyking/linux-namespaces-850489d3ccf)
+3. [浅谈Linux Namespace机制（一）](https://zhuanlan.zhihu.com/p/73248894)
