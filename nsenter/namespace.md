@@ -72,3 +72,82 @@ Using `setns()`, the process will adding an existed namespace into original name
 `int unshare(int flags)`
 
 Docker doesn't use this API.
+
+## UTS Namespace
+UTS(UNIX Time-sharing System) namespaces provides the isolation for host name and domain name. So that each single docker container will own its own host name and domain name, it will be treated as a single node instead of a process in host machine from network perspective.
+
+We will have an example shows how it works.
+
+ ```c
+#define _GNU_SOURCE
+#incude <sys/types.h>
+#include <sys/wait.h>
+#include <stdio.h>
+#include <sched.h>
+#include <signal.h>
+#include <unistd.h>
+
+#define STACK_SIZE (1024 * 1024)
+
+static char child_stack[STACK_SIZE];
+char* const child_args[] = {
+    "/bin/bash",
+    NULL
+};
+
+int child_main(void* args) {
+    printf("I'm in the child process!\n");
+    execv(child_args[0], child_args);
+    return 1;
+}
+
+int main() {
+    printf("Program starts now: \n");
+    int child_pid = clone(child_main, child_stack + STACK_SIZE, SIGCHLD, NULL);
+    waitpid(child_pid, NULL, 0);
+    printf("exited\n");
+    return 0;
+}
+```
+
+Compile and run the above program, it will shows like
+```bash
+gcc -Wall uts.c -o uts.o && ./uts.o
+Program starts now: 
+I'm in the child process!
+mengjial@ubuntu:/tmp$ exit
+exit
+exited
+mengjial@ubuntu:/tmp
+```
+From the output we can see that when we run bash inside the sub process, we are still under the same user and same namespace
+
+If we try to add an UTS isolation like the following:
+```c
+int child_main(void* args) {
+    printf("I'm in the child process!\n");
+    sethostname("NewNamespace", 12);
+    execv(child_args[0], child_args);
+    return 1;
+}
+
+int main() {
+    //[...]
+    int child_pod = clone(child_main, child_stack + STACK_SIZE, CLONE_NEWUTS | SIGCHLD, NULL);
+    //[...]
+}
+```
+
+Re-compile and run:
+```bash
+gcc -Wall uts.c -o uts.o && sudo ./uts.o
+sudo: unable to resolve host NewNamespace
+Program starts now: 
+I'm in the child process!
+root@NewNamespace:/tmp# exit
+exit
+exited!
+```
+We can see the hostname inside the sub process changed.
+If we don't add `CLONE_NEWUTS` here, we can still see the hostname changed inside the sub process, but the actual current hostname is changed by the sub process.
+We can use `hostname` command to check.
