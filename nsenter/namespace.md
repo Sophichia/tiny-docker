@@ -69,9 +69,13 @@ Using `setns()`, the process will adding an existed namespace into original name
 
 `unshare()` is very similar as the `clone()`, the difference is that it doesn't need to start a new process.
 
+Also, compared with `setns()`, `unshare()` doesn't need to link to a existing namespace, only need to specify the namespace need to be isolated. It will automatically create a new namespace.
+
 `int unshare(int flags)`
 
-Docker doesn't use this API.
+Since docker doesn't use this API, will ignore the details about this API.
+
+Note: The caller process for `unshare()` and `setns()` will not trap into the new PID namespace, only the child process created after will enter into the new PID namespace. This is because `getpid()` returns the PID depends on the caller's PID namespace. If caller traps into the new PID namespace, its PID will change. For the program running in user mode, they are thinking PID should be a constant value, if PID changed will make them crash.
 
 ## UTS Namespace
 UTS(UNIX Time-sharing System) namespaces provides the isolation for host name and domain name. So that each single docker container will own its own host name and domain name, it will be treated as a single node instead of a process in host machine from network perspective.
