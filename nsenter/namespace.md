@@ -84,7 +84,7 @@ We will have an example shows how it works.
 
  ```c
 #define _GNU_SOURCE
-#incude <sys/types.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <stdio.h>
 #include <sched.h>
@@ -155,6 +155,20 @@ exited!
 We can see the hostname inside the sub process changed.
 If we don't add `CLONE_NEWUTS` here, we can still see the hostname changed inside the sub process, but the actual current hostname is changed by the sub process.
 We can use `hostname` command to check.
+
+## IPC Namespace
+IPC(Inter-Process Communication) namespaces provides isolation for message queue, shared memory and other IPC resources. Processes in same IPC namespace can see each other, while processes in different IPC namespaces cannot.
+
+If we add `CLONE_NEWIPC` flag when clone, like
+```c
+int child_pid = clone(child_main, child_stack + STACK_SIZE, CLONE_NEWIPC | CLONE_NEWUTS | SIGCHLD, NULL);
+```
+
+We can use `ipcmk -Q` to create a message queue, and use `ipcs -q` to check opened message queue.
+
+If we create the message queue in main process, and check the message queue inside the child process, you will not find the message queue inside the parent.
+
+Docker uses IPC namespace to achieve IPC isolation between container with host, and container with container.
 
 ## Reference
 1. 《自己动手写Docker》
