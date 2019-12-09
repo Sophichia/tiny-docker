@@ -137,20 +137,20 @@ int child_main(void* args) {
 
 int main() {
     //[...]
-    int child_pod = clone(child_main, child_stack + STACK_SIZE, CLONE_NEWUTS | SIGCHLD, NULL);
+    int child_pid = clone(child_main, child_stack + STACK_SIZE, CLONE_NEWUTS | SIGCHLD, NULL);
     //[...]
 }
 ```
 
 Re-compile and run:
 ```bash
-gcc -Wall uts.c -o uts.o && sudo ./uts.o
-sudo: unable to resolve host NewNamespace
+mengjial@ubuntu  ~/tiny_docker  gcc -Wall uts.c -o uts.o && sudo ./uts.o
 Program starts now: 
 I'm in the child process!
-root@NewNamespace:/tmp# exit
+root@NewNamespace:~/tiny_docker# exit
 exit
-exited!
+exited
+mengjial@ubuntu  ~/tiny_docker 
 ```
 We can see the hostname inside the sub process changed.
 If we don't add `CLONE_NEWUTS` here, we can still see the hostname changed inside the sub process, but the actual current hostname is changed by the sub process.
@@ -167,6 +167,29 @@ int child_pid = clone(child_main, child_stack + STACK_SIZE, CLONE_NEWIPC | CLONE
 We can use `ipcmk -Q` to create a message queue, and use `ipcs -q` to check opened message queue.
 
 If we create the message queue in main process, and check the message queue inside the child process, you will not find the message queue inside the parent.
+
+```bash
+mengjial@ubuntu  ~/tiny_docker  ipcmk -Q
+Message queue id: 0
+ mengjial@ubuntu  ~/tiny_docker  ipcs -q
+
+------ Message Queues --------
+key        msqid      owner      perms      used-bytes   messages    
+0x29481ec1 0          mengjial   644        0            0           
+
+mengjial@ubuntu  ~/tiny_docker  gcc -Wall ipc.c -o ipc.o && sudo ./ipc.o
+Program starts now: 
+I'm in the child process!
+root@NewNamespace:~/tiny_docker# ipcs -q
+
+------ Message Queues --------
+key        msqid      owner      perms      used-bytes   messages    
+
+root@NewNamespace:~/tiny_docker# exit
+exit
+exited
+
+```
 
 Docker uses IPC namespace to achieve IPC isolation between container with host, and container with container.
 
