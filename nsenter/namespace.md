@@ -240,7 +240,7 @@ Kernel offers another privilege to init process - signal shielding.
 
 If there's no logic code for how to handle a signal inside init process, all this signal sent to init process from processes inside same namespace will be blocked even from root permission process. This feature is helping on preventing init process killed by mistake.
 
-If process in parent PID namespace sends a signal to child namespace's init process, if the signal is not `SIGKILL` or `SIGSTOP`, it will be blocked also. Once the init process gets killed, all processes inside same PID namespace will receives `SIGKILL` signal to be destroyed. And ideally the namespace gets destroyed together. But if `/proc/[pid]/ns/pid` is in open state, namespace will be kept. But the kept namespace cannot create new process.
+If process in ancestor PID namespace sends a signal to child namespace's init process, if the signal is not `SIGKILL` or `SIGSTOP`, it will be blocked also if there's no handler for it. Once the init process gets killed, all processes inside same PID namespace will receives `SIGKILL` signal to be destroyed. And ideally the namespace gets destroyed together. But if `/proc/[pid]/ns/pid` is in open state, namespace will be kept. But the kept namespace cannot create new process.
 
 ### Mount proc File System
 As what talked above, if you want to only have the view of processes in current namespace, you need to re-mount procfs
