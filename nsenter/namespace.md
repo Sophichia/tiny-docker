@@ -274,6 +274,13 @@ The isolation provided by mount namespace sometimes is too great. For example, i
 - `MS_SLAVE`. Mount and unmount events propagate into this mount point from a master shared peer group. Mount and unmount events under this mount point do not propagate to any peer. Not that a mount point can be the slave of another peer group while at the same time sharing mount and unmount events with a peer group of which it is a member.
 - `MS_UNBINDABLE`. This is like a private mount, and in addition this mount can't be bind mounted. Attempts to bind mount this mount with the `MS_BIND` flag will fail.
 
+## 5. Network Namespace
+Network namespaces provide isolation of the system resources associated with networking: network devices, IPv4 and IPv6 protocol stacks, IP routing tables, firewall rules, the /proc/net directory (which is a symbolic link to /proc/PID/net), the /sys/class/net directory, various files under /proc/sys/net, port numbers (sockets), and so on.  In addition, network namespaces isolate the UNIX domain abstract socket namespace (see unix(7)).
+
+A physical network device can live in exactly one network namespace. When a network namespace is freed (i.e., when the last process in the namespace terminates), its physical network devices are moved back to the initial network namespace (not to the parent of the process).
+
+A virtual network (veth(4)) device pair provides a pipe-like abstraction that can be used to create tunnels between network namespaces, and can be used to create a bridge to a physical network device in another namespace.  When a namespace is freed, the veth devices that it contains are destroyed.
+
 ## Reference
 1. 《自己动手写Docker》
 2. [Linux Namespaces](https://medium.com/@teddyking/linux-namespaces-850489d3ccf)
@@ -281,3 +288,4 @@ The isolation provided by mount namespace sometimes is too great. For example, i
 4. [pid_namespaces - overview of Linux PID namespaces](http://man7.org/linux/man-pages/man7/pid_namespaces.7.html)
 5. [Namespaces in operation, part 3: PID namespaces](https://lwn.net/Articles/531419/)
 6. [mount_namespaces - overview of Linux mount namespaces](http://man7.org/linux/man-pages/man7/mount_namespaces.7.html#)
+7. [network_namespaces - overview of Linux network namespaces](http://man7.org/linux/man-pages/man7/network_namespaces.7.html)
