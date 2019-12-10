@@ -266,3 +266,5 @@ That's why `docker exec` uses `setns()` to join existing namespace, but will eve
 1. 《自己动手写Docker》
 2. [Linux Namespaces](https://medium.com/@teddyking/linux-namespaces-850489d3ccf)
 3. [浅谈Linux Namespace机制（一）](https://zhuanlan.zhihu.com/p/73248894)
+4. [pid_namespaces - overview of Linux PID namespaces](http://man7.org/linux/man-pages/man7/pid_namespaces.7.html)
+5. [Namespaces in operation, part 3: PID namespaces](https://lwn.net/Articles/531419/)
