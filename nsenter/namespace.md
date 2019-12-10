@@ -243,7 +243,24 @@ If there's no logic code for how to handle a signal inside init process, all thi
 If process in parent PID namespace sends a signal to child namespace's init process, if the signal is not `SIGKILL` or `SIGSTOP`, it will be blocked also. Once the init process gets killed, all processes inside same PID namespace will receives `SIGKILL` signal to be destroyed. And ideally the namespace gets destroyed together. But if `/proc/[pid]/ns/pid` is in open state, namespace will be kept. But the kept namespace cannot create new process.
 
 ### Mount proc File System
+As what talked above, if you want to only have the view of processes in current namespace, you need to re-mount procfs
+```bash
+root@NewNamespace:~/tiny_docker# mount -t proc proc /proc
+root@NewNamespace:~/tiny_docker# ps a
+   PID TTY      STAT   TIME COMMAND
+     1 pts/8    S      0:00 /bin/bash
+    15 pts/8    R+     0:00 ps a
+root@NewNamespace:~/tiny_docker# 
+```
 
+Note: Since we are not having mount namespace isolation yet, this operation actually affected root namespace's file system. If exit from child process, and `ps a` again, there will show error now. `mount -t proc proc /proc` can restore it.
+
+### `unshare()` and `setns()`
+Using `unshare()` and `setns()` for PID namespace will need more attentions. 
+
+`unshare()` allows user to create new namespace in original namespace to do the isolation. But after create the new PID namespace, the caller process of `unshare()` won't get into new namespace. The following new child process will get into the new namespace, and it will become init process in new namespace. Similar process happens for `setns()`.
+
+That's why `docker exec` uses `setns()` to join existing namespace, but will eventually call `clone()`.
 
 ## Reference
 1. 《自己动手写Docker》
