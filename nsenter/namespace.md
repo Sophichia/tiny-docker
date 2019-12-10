@@ -238,7 +238,7 @@ In hence, if it will run multiple process in docker container, the very first co
 ### Signal and Init Process
 Kernel offers another privilege to init process - signal shielding. 
 
-If there's no logic code for how to handle a signal inside init process, all this signal sent to init process from processes inside same namespace will be blocked even from root permission process. This feature is helping on preventing init process killed by mistake.
+If there's no logic code for how to handle a signal inside init process, all this signal sent to init process from processes inside same namespace will be blocked even from r oot permission process. This feature is helping on preventing init process killed by mistake.
 
 If process in ancestor PID namespace sends a signal to child namespace's init process, if the signal is not `SIGKILL` or `SIGSTOP`, it will be blocked also if there's no handler for it. Once the init process gets killed, all processes inside same PID namespace will receives `SIGKILL` signal to be destroyed. And ideally the namespace gets destroyed together. But if `/proc/[pid]/ns/pid` is in open state, namespace will be kept. But the kept namespace cannot create new process.
 
@@ -262,9 +262,22 @@ Using `unshare()` and `setns()` for PID namespace will need more attentions.
 
 That's why `docker exec` uses `setns()` to join existing namespace, but will eventually call `clone()`.
 
+## 4. Mount Namespace
+Mount namespaces provide isolation of the list of mount points seen by the processes in each namespace instance.  Thus, the processes in each of the mount namespace instances will see distinct single-directory hierarchies.
+
+When a process tries to create a new mount namespace, the current mount point list will be copied to the child namespace. 
+
+The isolation provided by mount namespace sometimes is too great. For example, in order to make a newly loaded optical disk available in all mount namespaces, a mount operation was required in each namespace. For this use case, a feature called `mount propagation` introduced.
+
+- `MS_SHARED`. This mount point shares events with members of a peer group. Mount and unmount events immediately under this mount point will propagate to other mount points that are members of the peer group.
+- `MS_PRIVATE`. This mount point is private; it does not have a peer group. Mount and unmount events do not propagate into or out of this mount point.
+- `MS_SLAVE`. Mount and unmount events propagate into this mount point from a master shared peer group. Mount and unmount events under this mount point do not propagate to any peer. Not that a mount point can be the slave of another peer group while at the same time sharing mount and unmount events with a peer group of which it is a member.
+- `MS_UNBINDABLE`. This is like a private mount, and in addition this mount can't be bind mounted. Attempts to bind mount this mount with the `MS_BIND` flag will fail.
+
 ## Reference
 1. 《自己动手写Docker》
 2. [Linux Namespaces](https://medium.com/@teddyking/linux-namespaces-850489d3ccf)
 3. [浅谈Linux Namespace机制（一）](https://zhuanlan.zhihu.com/p/73248894)
 4. [pid_namespaces - overview of Linux PID namespaces](http://man7.org/linux/man-pages/man7/pid_namespaces.7.html)
 5. [Namespaces in operation, part 3: PID namespaces](https://lwn.net/Articles/531419/)
+6. [mount_namespaces - overview of Linux mount namespaces](http://man7.org/linux/man-pages/man7/mount_namespaces.7.html#)
