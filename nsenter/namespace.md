@@ -77,7 +77,7 @@ Since docker doesn't use this API, will ignore the details about this API.
 
 Note: The caller process for `unshare()` and `setns()` will not trap into the new PID namespace, only the child process created after will enter into the new PID namespace. This is because `getpid()` returns the PID depends on the caller's PID namespace. If caller traps into the new PID namespace, its PID will change. For the program running in user mode, they are thinking PID should be a constant value, if PID changed will make them crash.
 
-## UTS Namespace
+## 1. UTS Namespace
 UTS(UNIX Time-sharing System) namespaces provides the isolation for host name and domain name. So that each single docker container will own its own host name and domain name, it will be treated as a single node instead of a process in host machine from network perspective.
 
 We will have an example shows how it works.
@@ -156,7 +156,7 @@ We can see the hostname inside the sub process changed.
 If we don't add `CLONE_NEWUTS` here, we can still see the hostname changed inside the sub process, but the actual current hostname is changed by the sub process.
 We can use `hostname` command to check.
 
-## IPC Namespace
+## 2. IPC Namespace
 IPC(Inter-Process Communication) namespaces provides isolation for message queue, shared memory and other IPC resources. Processes in same IPC namespace can see each other, while processes in different IPC namespaces cannot.
 
 If we add `CLONE_NEWIPC` flag when clone, like
@@ -192,6 +192,58 @@ exited
 ```
 
 Docker uses IPC namespace to achieve IPC isolation between container with host, and container with container.
+
+## 3. PID Namespace
+PID namespace will re-number process, which means two processes can have same PID in different namespaces.
+
+Kernel maintains a tree structure to hold all namespaces. Root of the tree is created when the system starting, which is called namespace. The namespace created by root namespace is call child namespace, and will also be the child node of the root.
+
+In this way, parent namespace can have the view of child process, and can affect child process by signal. But child namespace cannot have any effect on parent.
+
+- Each initial process in namespace (PID=1) will just like init process in Linus, has special capability.
+- Processes in a namespace, cannot kill the process in its parent or sibling namespace.
+- Root namespace has the view for all the processes.
+
+So if you want to monitor the program running inside Docker, you can monitor all the processes under Docker daemon's PID namespace.
+
+```
+//[...]
+int child_pid = clone(child_main, child_stack + STACK_SIZE, CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWUTS | SIGCHLD, NULL);
+//[...]
+```
+
+```bash
+mengjial@ubuntu  ~/tiny_docker  gcc -Wall pid.c -o pid.o && sudo ./pid.o
+[sudo] password for mengjial: 
+Program starts now: 
+I'm in the child process!
+root@NewNamespace:~/tiny_docker# echo $$
+1
+root@NewNamespace:~/tiny_docker# exit
+exit
+exited
+ mengjial@ubuntu  ~/tiny_docker  echo $$
+2414
+ mengjial@ubuntu  ~/tiny_docker  
+```
+From the log we can find that the shell PID inside child process changed to 1.
+
+But if we use `ps aux/top` commands inside the child process, we still can see all PIDs for parent process. That is because we didn't isolate the file system mount point. `ps aux/top` are actually calling actually file content under /proc. So compared with other namespace, in order to make container secure and stable, PID namespace needs more works as following.
+
+### Init Process in PID Namespace
+In the tradition UNIX operating system, process with PID=1 is the init process. It is the parent for all process, and it will maintain a process table to check them periodically. Once a child process becomes orphaned, init process will adopt it until it gets killed.
+
+In hence, if it will run multiple process in docker container, the very first command process to run should be something can manage resources like monitoring and recycle, like bash.
+
+### Signal and Init Process
+Kernel offers another privilege to init process - signal shielding. 
+
+If there's no logic code for how to handle a signal inside init process, all this signal sent to init process from processes inside same namespace will be blocked even from root permission process. This feature is helping on preventing init process killed by mistake.
+
+If process in parent PID namespace sends a signal to child namespace's init process, if the signal is not `SIGKILL` or `SIGSTOP`, it will be blocked also. Once the init process gets killed, all processes inside same PID namespace will receives `SIGKILL` signal to be destroyed. And ideally the namespace gets destroyed together. But if `/proc/[pid]/ns/pid` is in open state, namespace will be kept. But the kept namespace cannot create new process.
+
+### Mount proc File System
+
 
 ## Reference
 1. 《自己动手写Docker》
