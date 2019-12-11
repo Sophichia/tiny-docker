@@ -1,4 +1,6 @@
 # tiny-docker
-I am using this repository to store my personal reading notes and code when reading 《自己动手写Docker》.
+I am using this repository to store my personal reading notes and code when learning docker.
 
-The original official github repository for this book is https://github.com/xianlubird/mydocker.
+The two main books I am using is 《Docker容器与容器云》 and 《自己动手写Docker》
+
+The original official github repository for 《自己动手写Docker》 is https://github.com/xianlubird/mydocker.
