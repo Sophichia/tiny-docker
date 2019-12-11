@@ -281,7 +281,97 @@ A physical network device can live in exactly one network namespace. When a netw
 
 A virtual network (veth(4)) device pair provides a pipe-like abstraction that can be used to create tunnels between network namespaces, and can be used to create a bridge to a physical network device in another namespace.  When a namespace is freed, the veth devices that it contains are destroyed.
 
-## Reference
+## 6. User Namespace
+User namespace is the last namespace kernel supports. As it is not fully stable, some linux version doesn't enable USER_NS when compiling the kernel.
+
+It mainly isolates security related identifier and attribute, including user ID, user group ID, root directory, key and special permissions. In a general way, a normal user's process can create a new process which can has different user or user groups in the new user namespace.
+
+In Linux, root user's ID is 0, we will have a demo that a process whose user ID is not 0 becomes to 0 after create a new user namespace.
+
+```c
+//[...]
+#include <sys/capability.h>
+//[...]
+
+int child_main(void* args) {
+    printf("I'm in the child process!\n");
+    cap_t caps;
+    printf("eUID = %ld; eGID = %ld; ", (long) geteuid(), (long) getegid());
+    caps = cap_get_proc();
+    printf("capabilities: %s\n", cap_to_text(caps, NULL));
+    execv(child_args[0], child_args);
+    return 1;
+}
+
+//[...]
+int child_pid = clone(child_main, child_stack + STACK_SIZE, CLONE_NEWUSER | SIGCHLD, NULL);
+```
+
+```bash
+mengjial@ubuntu  ~/tiny_docker  gcc -Wall userns.c -lcap -o userns.o && sudo ./userns.o
+Program starts now: 
+I'm in the child process!
+eUID = 65534; eGID = 65534; capabilities: = cap_chown,cap_dac_override,cap_dac_read_search,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_linux_immutable,cap_net_bind_service,cap_net_broadcast,cap_net_admin,cap_net_raw,cap_ipc_lock,cap_ipc_owner,cap_sys_module,cap_sys_rawio,cap_sys_chroot,cap_sys_ptrace,cap_sys_pacct,cap_sys_admin,cap_sys_boot,cap_sys_nice,cap_sys_resource,cap_sys_time,cap_sys_tty_config,cap_mknod,cap_lease,cap_audit_write,cap_audit_control,cap_setfcap,cap_mac_override,cap_mac_admin,cap_syslog,cap_wake_alarm,cap_block_suspend,37+ep
+nobody@ubuntu:~/tiny_docker$ exit
+exit
+exited
+
+mengjial@ubuntu  ~/tiny_docker  id -u  
+1000
+ mengjial@ubuntu  ~/tiny_docker  id -g
+1000
+
+```
+
+From the output, we can get these knowledge
+- After a new user namespace created, the init process is granted all permissions inside this namespace.
+- The UID and GID are different inside new namespace compare with outside.
+- User namespace also maintains a tree structure just like pid namespace.
+
+Here is the example how to mapping users.
+```c
+void set_uid_map(pid_t pid, int inside_id, int outside_id, int length) {
+  char path[256];
+  sprintf(path, "/proc/%d/uid_map", getpid());
+  FILE* uid_map = fopen(path, "w");
+  fprintf(uid_map, "%d %d %d", inside_id, outside_id, length);
+  fclose(uid_map);
+}
+
+void set_gid_map(pid_t pid, int inside_id, int outside_id, int length) {
+  char path[256];
+  sprintf(path, "/proc/%d/gid_map", getpid());
+  FILE* gid_map = fopen(path, "w");
+  fprintf(gid_map, "%d %d %d", inside_id, outside_id, length);
+  fclose(gid_map);
+}
+
+int child_main(void* args) {
+    printf("I'm in the child process!\n");
+    cap_t caps;
+    set_uid_map(getpid(), 0, 1000, 1);
+    set_gid_map(getpid(), 0, 1000, 1);
+    printf("eUID = %ld; eGID = %ld; ", (long) geteuid(), (long) getegid());
+    caps = cap_get_proc();
+    printf("capabilities: %s\n", cap_to_text(caps, NULL));
+    execv(child_args[0], child_args);
+    return 1;
+}
+```
+
+```bash
+mengjial@ubuntu  ~/tiny_docker  gcc -Wall userns.c -lcap -o userns.o && ./userns.o
+Program starts now: 
+I'm in the child process!
+eUID = 0; eGID = 65534; capabilities: = cap_chown,cap_dac_override,cap_dac_read_search,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_linux_immutable,cap_net_bind_service,cap_net_broadcast,cap_net_admin,cap_net_raw,cap_ipc_lock,cap_ipc_owner,cap_sys_module,cap_sys_rawio,cap_sys_chroot,cap_sys_ptrace,cap_sys_pacct,cap_sys_admin,cap_sys_boot,cap_sys_nice,cap_sys_resource,cap_sys_time,cap_sys_tty_config,cap_mknod,cap_lease,cap_audit_write,cap_audit_control,cap_setfcap,cap_mac_override,cap_mac_admin,cap_syslog,cap_wake_alarm,cap_block_suspend,37+ep
+root@ubuntu:~/tiny_docker# exit
+exit
+exited
+```
+
+We can see we changed the user in new user namespace as a root, and outside that namespace it is just user with uid=1000.
+
+## Reference and Recommend Blog
 1. 《容器与容器云》
 2. [Linux Namespaces](https://medium.com/@teddyking/linux-namespaces-850489d3ccf)
 3. [浅谈Linux Namespace机制（一）](https://zhuanlan.zhihu.com/p/73248894)
@@ -289,3 +379,4 @@ A virtual network (veth(4)) device pair provides a pipe-like abstraction that ca
 5. [Namespaces in operation, part 3: PID namespaces](https://lwn.net/Articles/531419/)
 6. [mount_namespaces - overview of Linux mount namespaces](http://man7.org/linux/man-pages/man7/mount_namespaces.7.html#)
 7. [network_namespaces - overview of Linux network namespaces](http://man7.org/linux/man-pages/man7/network_namespaces.7.html)
+8. [Linux namespace 简介 part 6 - USER](http://blog.lucode.net/linux/intro-Linux-namespace-6.html)
