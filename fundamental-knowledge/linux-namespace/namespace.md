@@ -282,7 +282,7 @@ A physical network device can live in exactly one network namespace. When a netw
 A virtual network (veth(4)) device pair provides a pipe-like abstraction that can be used to create tunnels between network namespaces, and can be used to create a bridge to a physical network device in another namespace.  When a namespace is freed, the veth devices that it contains are destroyed.
 
 ## Reference
-1. 《自己动手写Docker》
+1. 《容器与容器云》
 2. [Linux Namespaces](https://medium.com/@teddyking/linux-namespaces-850489d3ccf)
 3. [浅谈Linux Namespace机制（一）](https://zhuanlan.zhihu.com/p/73248894)
 4. [pid_namespaces - overview of Linux PID namespaces](http://man7.org/linux/man-pages/man7/pid_namespaces.7.html)
