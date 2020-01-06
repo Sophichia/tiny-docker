@@ -8,3 +8,6 @@ There's 4 features of cgroups to a developer:
 3. All resource management is achieved by sub-system.
 4. All sub-tasks originally created within same group with its parent.
 
+## Reading Materials
+1. https://www.cnblogs.com/menkeyi/p/10941843.html
+2. https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/cgroup-v1/cgroups.txt?h=v4.18-rc1
