@@ -22,7 +22,7 @@ func FindCgroupMountPoint(subsystem string) string {
 		text := scanner.Text()
 		// e.g 37 25 0:30 / /sys/fs/cgroup/memory rw,relatime - cgroup cgroup rw,memory
 		fields := strings.Split(text, " ")
-		for _, opt := range strings.Split(fields[len(fields) - 1], ",") {
+		for _, opt := range strings.Split(fields[len(fields)-1], ",") {
 			if opt == subsystem {
 				return fields[4]
 			}
