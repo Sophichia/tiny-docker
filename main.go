@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
-	"log"
 	"os"
 )
 
@@ -46,6 +46,14 @@ func main() {
 	app := cli.NewApp()
 	setInformation(app)
 	setCommand(app)
+
+	app.Before = func(context *cli.Context) error {
+		// Log as JSON format instead of ASCII formatter
+		log.SetFormatter(&log.JSONFormatter{})
+
+		log.SetOutput(os.Stdout)
+		return nil
+	}
 
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
