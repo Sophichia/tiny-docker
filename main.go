@@ -40,6 +40,3 @@ func setCommand(app *cli.App) {
 		&runCommand,
 	}
 }
-
-
-

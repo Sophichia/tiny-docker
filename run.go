@@ -15,7 +15,6 @@ func Run(tty bool, command string) {
 	os.Exit(-1)
 }
 
-
 // TODO
 // Change it to uuid
 //func randStringBytes(n int) string {

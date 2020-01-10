@@ -7,7 +7,7 @@ import (
 )
 
 type CgroupMnanager struct {
-	Path string
+	Path     string
 	Resource *subsystems.ResourceConfig
 }
 
@@ -17,9 +17,8 @@ func New(path string) *CgroupMnanager {
 	}
 }
 
-
 // Put a process's PID into this cgroup
-func(c *CgroupMnanager) Apply(pid int) error {
+func (c *CgroupMnanager) Apply(pid int) error {
 	for _, subsysIns := range subsystems.SubsystemsIns {
 		if err := subsysIns.Apply(c.Path, pid); err != nil {
 			return fmt.Errorf("add pid into cgroup fails %v", err)
