@@ -1,8 +1,9 @@
 package container
 
 import (
+	"fmt"
+	log "github.com/sirupsen/logrus"
 	"os"
-	"os/exec"
 	"syscall"
 )
 
@@ -56,16 +57,21 @@ import (
 //	syscall.Mount("tmpfs", "/dev", "tmpfs", syscall.MS_NOSUID | syscall.MS_STRICTATIME, "mode=755")
 //}
 
-func NewParentProcess(tty bool, command string) *exec.Cmd {
-	args := []string{"init", command}
-	cmd := exec.Command("/proc/self/exe", args...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID | syscall.CLONE_NEWNS | syscall.CLONE_NEWNET | syscall.CLONE_NEWIPC,
+func RunContainerInitProcess(command string, args []string) error {
+	log.Infof("command %s", command)
+
+	// MS_NOEXEC: Not allow other programs in this file system
+	// MS_NOSUID: Not allow set-user-ID or set-group-ID when then running process in this file system
+	// MS_NODEVV: All mount operation will set it as default after linux2.4
+	defaultMountFlags := syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV
+	syscall.Mount("proc", "/proc", "proc", uintptr(defaultMountFlags), "")
+
+	argv := []string{command}
+	// syscall.Exec will call "int execve" in kernel.
+	// It will overwrite all the data and context in stack for init process by the upcoming process.
+	if err := syscall.Exec(command, argv, os.Environ()); err != nil {
+		log.Errorf("execute command %v", err.Error())
+		return fmt.Errorf("execute command fails %v", err)
 	}
-	if tty {
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-	}
-	return cmd
+	return nil
 }
