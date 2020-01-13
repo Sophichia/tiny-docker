@@ -59,9 +59,10 @@ var runCommand = cli.Command{
 			return fmt.Errorf("Missing container command! ")
 		}
 		var cmdArray []string
-		for _, arg := range c.Args() {
+		for _, arg := range c.Args().Slice() {
 			cmdArray = append(cmdArray, arg)
 		}
+		fmt.Println(cmdArray)
 		tty := c.Bool("ti")
 		resCof := &subsystems.ResourceConfig{
 			MemoryLimit: c.String("m"),

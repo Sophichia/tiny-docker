@@ -119,7 +119,7 @@ func pivotRoot(root string) error {
 	if err := os.Mkdir(pivotDir, 0777); err != nil {
 		return err
 	}
-	if err := syscall.PivotRoot(root, pivotDIr); err != nil {
+	if err := syscall.PivotRoot(root, pivotDir); err != nil {
 		return fmt.Errorf("pivot_root %v", err)
 	}
 	if err := syscall.Chdir("/"); err != nil {
