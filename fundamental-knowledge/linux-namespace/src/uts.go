@@ -1,10 +1,10 @@
 package main
 
 import (
+	"log"
+	"os"
 	"os/exec"
 	"syscall"
-	"os"
-	"log"
 )
 
 func main() {

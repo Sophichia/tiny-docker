@@ -7,10 +7,10 @@ type ResourceConfig struct {
 }
 
 type Subsystem interface {
-	Name() string // returns the name of subsystem
+	Name() string                               // returns the name of subsystem
 	Set(path string, res *ResourceConfig) error // set the resource limitation
-	Apply(path string, pid int) error // Add process into cgroup
-	Remove(path string) error // Delete cgroup
+	Apply(path string, pid int) error           // Add process into cgroup
+	Remove(path string) error                   // Delete cgroup
 }
 
 var (

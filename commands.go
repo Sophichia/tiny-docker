@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/Sophichia/tiny-docker/cgroups/subsystems"
 	"github.com/Sophichia/tiny-docker/container"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -57,46 +58,19 @@ var runCommand = cli.Command{
 		if c.Args().Len() < 1 {
 			return fmt.Errorf("Missing container command! ")
 		}
-		cmd := c.Args().Get(0)
+		var cmdArray []string
+		for _, arg := range c.Args() {
+			cmdArray = append(cmdArray, arg)
+		}
 		tty := c.Bool("ti")
-		Run(tty, cmd)
+		resCof := &subsystems.ResourceConfig{
+			MemoryLimit: c.String("m"),
+			CpuShare:    c.String("cpuset"),
+			CpuSet:      c.String("cpushare"),
+		}
+
+		Run(tty, cmdArray, resCof)
 		return nil
-		//
-		//var cmdArray []string
-		//for _, cmd := range c.Args().Slice() {
-		//	cmdArray = append(cmdArray, cmd)
-		//}
-		//
-		//imageName := cmdArray[0]
-		//cmdArray = cmdArray[1:]
-		//
-		//createTty := c.Bool("ti")
-		//detach := c.Bool("d")
-		//
-		//if createTty && detach {
-		//	return fmt.Errorf("ti and d param cannot set together! ")
-		//}
-		//
-		//resConfig := &subsystems.ResourceConfig{
-		//	MemoryLimit: c.String("m"),
-		//	CpuSet: c.String("cpuset"),
-		//	CpuShare: c.String("cpushare"),
-		//}
-		//
-		//log.Infof("create tty: %v", createTty)
-		//containerName :=  c.String("name")
-		//volume := c.String("v")
-		//network := c.String("net")
-		//
-		//envSlice := c.StringSlice("e")
-		//portMapping := c.StringSlice("p")
-		//
-		//err := Run(createTty, cmdArray, resConfig, containerName, volume, imageName, envSlice, network, portMapping)
-		//if err != nil {
-		//	return fmt.Errorf("run container command fails %v", err)
-		//}
-		//
-		//return nil
 	},
 }
 
@@ -107,7 +81,7 @@ var initCommand = cli.Command{
 		log.Infof("start init process")
 		cmd := c.Args().Get(0)
 		log.Info("command %s", cmd)
-		err := container.RunContainerInitProcess(cmd, nil)
+		err := container.RunContainerInitProcess()
 		return err
 	},
 }

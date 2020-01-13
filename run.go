@@ -1,18 +1,14 @@
 package main
 
 import (
+	"github.com/Sophichia/tiny-docker/cgroups/subsystems"
 	"github.com/Sophichia/tiny-docker/container"
 	log "github.com/sirupsen/logrus"
 	"os"
 )
 
-func Run(tty bool, command string) {
-	parent := container.NewParentProcess(tty, command)
-	if err := parent.Start(); err != nil {
-		log.Errorf("start process fail %v", err)
-	}
-	parent.Wait()
-	os.Exit(-1)
+func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig) {
+	parent, writePip := container.NewParentProcess()
 }
 
 // TODO
