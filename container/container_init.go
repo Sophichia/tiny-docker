@@ -82,6 +82,7 @@ func RunContainerInitProcess() error {
 }
 
 func readUserCommand() []string {
+	// uintptr(3) refers to the fd whose index is 3, in this case will be the extra pipe file.
 	pipe := os.NewFile(uintptr(3), "pipe")
 	msg, err := ioutil.ReadAll(pipe)
 	if err != nil {
