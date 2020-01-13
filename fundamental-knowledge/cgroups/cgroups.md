@@ -11,3 +11,4 @@ There's 4 features of cgroups to a developer:
 ## Reading Materials
 1. https://www.cnblogs.com/menkeyi/p/10941843.html
 2. https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/cgroup-v1/cgroups.txt?h=v4.18-rc1
+3. https://www.infoq.cn/article/docker-kernel-knowledge-cgroups-resource-isolation
