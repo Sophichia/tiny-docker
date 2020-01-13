@@ -49,3 +49,11 @@ func GetCgroupPath(subsystem string, cgroupPath string, autoCreate bool) (string
 		return "", fmt.Errorf("find cgroup path err %v", err)
 	}
 }
+
+func FileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}

@@ -6,19 +6,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type CgroupMnanager struct {
+type CgroupManager struct {
 	Path     string
 	Resource *subsystems.ResourceConfig
 }
 
-func New(path string) *CgroupMnanager {
-	return &CgroupMnanager{
+func New(path string) *CgroupManager {
+	logrus.Infof("Create cgroupManager %s", path)
+	return &CgroupManager{
 		Path: path,
 	}
 }
 
 // Put a process's PID into this cgroup
-func (c *CgroupMnanager) Apply(pid int) error {
+func (c *CgroupManager) Apply(pid int) error {
 	for _, subsysIns := range subsystems.SubsystemsIns {
 		if err := subsysIns.Apply(c.Path, pid); err != nil {
 			return fmt.Errorf("add pid into cgroup fails %v", err)
@@ -28,7 +29,7 @@ func (c *CgroupMnanager) Apply(pid int) error {
 }
 
 // Set the cgroup's resource limitation
-func (c *CgroupMnanager) Set(res *subsystems.ResourceConfig) error {
+func (c *CgroupManager) Set(res *subsystems.ResourceConfig) error {
 	for _, subsysIns := range subsystems.SubsystemsIns {
 		if err := subsysIns.Set(c.Path, res); err != nil {
 			return fmt.Errorf("set resource limitation fails %v", err)
@@ -38,10 +39,12 @@ func (c *CgroupMnanager) Set(res *subsystems.ResourceConfig) error {
 }
 
 // Destroy cgroup
-func (c *CgroupMnanager) Destroy() error {
+func (c *CgroupManager) Destroy() error {
 	for _, subsysIns := range subsystems.SubsystemsIns {
-		if err := subsysIns.Remove(c.Path); err != nil {
-			logrus.Warnf("remove cgroup fails %v", err)
+		if subsystems.FileExists(c.Path) {
+			if err := subsysIns.Remove(c.Path); err != nil {
+				logrus.Warnf("remove cgroup fails %v", err)
+			}
 		}
 	}
 	return nil

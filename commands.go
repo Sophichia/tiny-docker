@@ -62,7 +62,6 @@ var runCommand = cli.Command{
 		for _, arg := range c.Args().Slice() {
 			cmdArray = append(cmdArray, arg)
 		}
-		fmt.Println(cmdArray)
 		tty := c.Bool("ti")
 		resCof := &subsystems.ResourceConfig{
 			MemoryLimit: c.String("m"),
@@ -80,8 +79,6 @@ var initCommand = cli.Command{
 	Usage: "Init container process run user's proocess in container. Do not call it outside",
 	Action: func(c *cli.Context) error {
 		log.Infof("start init process")
-		cmd := c.Args().Get(0)
-		log.Info("command %s", cmd)
 		err := container.RunContainerInitProcess()
 		return err
 	},
