@@ -25,6 +25,7 @@ func (m *MemorySubSystem) Set(cgroupPath string, res *ResourceConfig) error {
 }
 
 func (m *MemorySubSystem) Remove(cgroupPath string) error {
+	// Removing a cgroup is just removing its directory
 	if subsysCgroupPath, err := GetCgroupPath(m.Name(), cgroupPath, false); err == nil {
 		return os.RemoveAll(subsysCgroupPath)
 	} else {
