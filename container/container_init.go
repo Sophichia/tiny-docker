@@ -112,6 +112,9 @@ func setUpMount() {
 }
 
 func pivotRoot(root string) error {
+	// PivotRoot is used to change current root's file system.
+	// In order to make new_root and old_root not under same file system, we re-mount root.
+	// bind mount will change a mount point
 	if err := syscall.Mount(root, root, "bind", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
 		return fmt.Errorf("Mount root fs to itself error %v", err)
 	}
@@ -123,6 +126,7 @@ func pivotRoot(root string) error {
 	if err := syscall.PivotRoot(root, pivotDir); err != nil {
 		return fmt.Errorf("pivot_root %v", err)
 	}
+	// change current working directory to root
 	if err := syscall.Chdir("/"); err != nil {
 		return fmt.Errorf("chdir / %v", err)
 	}
@@ -132,5 +136,6 @@ func pivotRoot(root string) error {
 		return fmt.Errorf("unmount pivot_root dir %v", err)
 	}
 
+	// Delete tmp folder
 	return os.Remove(pivotDir)
 }
