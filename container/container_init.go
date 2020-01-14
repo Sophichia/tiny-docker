@@ -114,7 +114,9 @@ func setUpMount() {
 func pivotRoot(root string) error {
 	// PivotRoot is used to change current root's file system.
 	// In order to make new_root and old_root not under same file system, we re-mount root.
-	// bind mount will change a mount point
+	// bind mount will mount a existing directory to another directory
+	// self bind mount is hack which will create a new mount point.
+	// https://medium.com/@teddyking/namespaces-in-go-mount-e4c04fe9fb29
 	if err := syscall.Mount(root, root, "bind", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
 		return fmt.Errorf("Mount root fs to itself error %v", err)
 	}
